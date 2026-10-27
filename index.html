@@ -125,6 +125,7 @@
   .badge.pdf{background:#fff1f0;color:#d4380d}
   .badge.image{background:#eaf4ff;color:#1668dc}
 
+  .tool-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .rotate-group{display:flex;gap:5px;flex-wrap:wrap}
   .rot{
     border:1px solid var(--border);background:#fff;color:var(--muted);
@@ -135,6 +136,13 @@
   .rot.active{
     background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600;
   }
+  .crop-btn{
+    border:1px solid var(--border);background:#fff;color:var(--muted);
+    border-radius:7px;padding:3px 9px;font-size:11.5px;cursor:pointer;
+    transition:.15s;
+  }
+  .crop-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .crop-btn.has-crop{color:var(--primary);border-color:#b9c7ee;background:#eef2ff}
 
   .ops{display:flex;flex-direction:column;gap:6px}
   .icon-btn{
@@ -177,9 +185,93 @@
     position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
     background:rgba(31,41,55,.94);color:#fff;font-size:13.5px;
     padding:11px 20px;border-radius:10px;opacity:0;pointer-events:none;
-    transition:.28s;z-index:99;max-width:80vw;
+    transition:.28s;z-index:200;max-width:80vw;
   }
   .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ==================== 裁剪弹窗 ==================== */
+  .crop-modal{
+    position:fixed;inset:0;z-index:100;
+    background:rgba(15,23,42,.6);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .crop-modal.show{opacity:1;pointer-events:auto}
+  .crop-dialog{
+    background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;
+    max-width:96vw;max-height:94vh;
+    transform:translateY(10px);transition:transform .2s;
+  }
+  .crop-modal.show .crop-dialog{transform:none}
+  .crop-header{
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    display:flex;align-items:baseline;gap:10px;
+    font-size:15px;font-weight:700;flex:none;
+  }
+  .crop-filename{
+    font-size:12.5px;color:var(--muted);font-weight:400;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px;
+  }
+  .crop-stage{
+    padding:20px;display:flex;align-items:center;justify-content:center;
+    background:#f8fafc;overflow:auto;flex:1;min-height:0;
+  }
+  .crop-body{
+    position:relative;overflow:hidden;border-radius:6px;
+    background:#fff;line-height:0;
+    touch-action:none;user-select:none;
+  }
+  .crop-body img{
+    display:block;width:100%;height:100%;
+    pointer-events:none;user-select:none;-webkit-user-drag:none;
+  }
+  .crop-box{
+    position:absolute;left:0;top:0;width:100%;height:100%;
+    box-sizing:border-box;
+    border:2px solid #fff;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.55), 0 0 0 1px rgba(59,91,253,.85) inset;
+    cursor:move;touch-action:none;
+  }
+  .crop-grid{
+    position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,.4) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.4) 1px, transparent 1px);
+    background-size:33.333% 33.333%;
+  }
+  .crop-handle{
+    position:absolute;width:16px;height:16px;
+    background:#fff;border:2px solid var(--primary);border-radius:50%;
+    z-index:3;touch-action:none;
+  }
+  .crop-handle[data-dir="nw"]{ left:-8px; top:-8px; cursor:nwse-resize }
+  .crop-handle[data-dir="n"] { left:50%; top:-8px; margin-left:-8px; cursor:ns-resize }
+  .crop-handle[data-dir="ne"]{ right:-8px; top:-8px; cursor:nesw-resize }
+  .crop-handle[data-dir="w"] { left:-8px; top:50%; margin-top:-8px; cursor:ew-resize }
+  .crop-handle[data-dir="e"] { right:-8px; top:50%; margin-top:-8px; cursor:ew-resize }
+  .crop-handle[data-dir="sw"]{ left:-8px; bottom:-8px; cursor:nesw-resize }
+  .crop-handle[data-dir="s"] { left:50%; bottom:-8px; margin-left:-8px; cursor:ns-resize }
+  .crop-handle[data-dir="se"]{ right:-8px; bottom:-8px; cursor:nwse-resize }
+
+  .crop-footer{
+    padding:14px 18px;border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;flex:none;
+  }
+  .crop-hint{font-size:12px;color:var(--muted)}
+  .crop-actions{display:flex;gap:10px;margin-left:auto}
+  .btn-sm{
+    border-radius:9px;padding:9px 18px;font-size:13.5px;
+    font-weight:600;cursor:pointer;border:1px solid transparent;
+    transition:.15s;
+  }
+  .btn-sm.ghost{background:#fff;border-color:var(--border);color:var(--text)}
+  .btn-sm.ghost:hover{border-color:#b9c7ee;color:var(--primary)}
+  .btn-sm.primary{background:var(--primary);color:#fff}
+  .btn-sm.primary:hover{background:var(--primary-dark)}
 
   @media (max-width:560px){
     .app{padding:20px 14px 60px}
@@ -189,6 +281,12 @@
     .btn.primary{width:100%;padding:14px}
     .actions{flex-direction:column;align-items:stretch}
     .status{text-align:center}
+    .crop-stage{padding:12px}
+    .crop-header{padding:12px 14px}
+    .crop-filename{max-width:150px}
+    .crop-footer{padding:12px 14px}
+    .crop-hint{display:none}
+    .crop-actions{width:100%;justify-content:flex-end}
   }
 </style>
 </head>
@@ -249,6 +347,40 @@
   </div>
 </div>
 
+<!-- ==================== 裁剪弹窗 ==================== -->
+<div class="crop-modal" id="cropModal" aria-hidden="true">
+  <div class="crop-dialog" role="dialog" aria-modal="true" aria-label="裁剪图片">
+    <div class="crop-header">
+      <span>✂ 裁剪图片</span>
+      <span class="crop-filename" id="cropFilename"></span>
+    </div>
+    <div class="crop-stage" id="cropStage">
+      <div class="crop-body" id="cropBody">
+        <img id="cropImg" alt="" draggable="false" />
+        <div class="crop-box" id="cropBox">
+          <div class="crop-grid"></div>
+          <span class="crop-handle" data-dir="nw"></span>
+          <span class="crop-handle" data-dir="n"></span>
+          <span class="crop-handle" data-dir="ne"></span>
+          <span class="crop-handle" data-dir="w"></span>
+          <span class="crop-handle" data-dir="e"></span>
+          <span class="crop-handle" data-dir="sw"></span>
+          <span class="crop-handle" data-dir="s"></span>
+          <span class="crop-handle" data-dir="se"></span>
+        </div>
+      </div>
+    </div>
+    <div class="crop-footer">
+      <span class="crop-hint">拖动选框调整裁剪区域；旋转将在生成 PDF 时应用</span>
+      <div class="crop-actions">
+        <button class="btn-sm ghost" id="cropResetBtn">重置</button>
+        <button class="btn-sm ghost" id="cropCancelBtn">取消</button>
+        <button class="btn-sm primary" id="cropConfirmBtn">确认裁剪</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- 依赖库 -->
@@ -256,7 +388,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
 /* ============================================================
- *  易报销 —— 票据合并 PDF
+ *  易报销 —— 票据合并 PDF（支持裁剪）
  * ============================================================ */
 
 const { PDFDocument } = PDFLib;
@@ -276,11 +408,12 @@ const PAPER_SIZES = {
 };
 
 /* ---------------- 状态 ---------------- */
-let items = [];   // { id, name, kind, pageCount, rotation, canvas, thumb }
+let items = [];   // { id, name, kind, pageCount, rotation, canvas, originalCanvas, cropRect, thumb }
 let idSeq = 0;
 
 /* ---------------- 工具 ---------------- */
 const $ = (s) => document.querySelector(s);
+const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
@@ -336,7 +469,6 @@ async function pdfToCanvas(file) {
   const page = await pdf.getPage(1);
 
   const base = page.getViewport({ scale: 1 });
-  // 目标：长边约 MAX_DIM 像素（最高 3 倍）
   const scale = Math.min(3, MAX_DIM / Math.max(base.width, base.height));
   const viewport = page.getViewport({ scale: Math.max(scale, 0.6) });
 
@@ -394,7 +526,9 @@ async function createItem(file) {
     kind: isPdf ? 'pdf' : 'image',
     pageCount,
     rotation: 0,
-    canvas,
+    canvas,               // 当前使用的内容（可能是裁剪结果）
+    originalCanvas: canvas, // 原始内容（裁剪基准）
+    cropRect: null,       // 归一化裁剪区域 {x,y,w,h}，null 表示未裁剪
     thumb: makeThumb(canvas),
   };
 }
@@ -423,6 +557,8 @@ function render() {
       (a) => `<button class="rot${item.rotation === a ? ' active' : ''}" data-angle="${a}">${a}°</button>`
     ).join('');
 
+    const cropped = !!item.cropRect;
+
     card.innerHTML = `
       <div class="thumb"><img src="${item.thumb}" alt=""></div>
       <div class="meta">
@@ -433,7 +569,10 @@ function render() {
           ${item.kind === 'pdf' && item.pageCount > 1
             ? `<span class="badge">共 ${item.pageCount} 页 · 取首页</span>` : ''}
         </div>
-        <div class="rotate-group" data-id="${item.id}">${rotBtns}</div>
+        <div class="tool-row">
+          <div class="rotate-group" data-id="${item.id}">${rotBtns}</div>
+          <button class="crop-btn${cropped ? ' has-crop' : ''}" data-crop="${item.id}">✂ ${cropped ? '已裁剪' : '裁剪'}</button>
+        </div>
       </div>
       <div class="ops">
         <button class="icon-btn" data-act="up"   ${i === 0 ? 'disabled' : ''} title="上移">↑</button>
@@ -453,6 +592,14 @@ $('#fileList').addEventListener('click', (e) => {
     const angle = Number(rotBtn.dataset.angle);
     const item = items.find((it) => it.id === id);
     if (item) { item.rotation = angle; render(); }
+    return;
+  }
+  // 裁剪
+  const cropBtn = e.target.closest('.crop-btn');
+  if (cropBtn) {
+    const id = Number(cropBtn.dataset.crop);
+    const item = items.find((it) => it.id === id);
+    if (item) openCrop(item);
     return;
   }
   // 排序 / 删除
@@ -522,7 +669,239 @@ async function addFiles(fileList) {
 }
 
 /* ============================================================
- *  四、版式计算
+ *  四、裁剪功能
+ * ============================================================ */
+
+const cropState = {
+  item: null,
+  baseCanvas: null,
+  dispW: 0,
+  dispH: 0,
+  box: { x: 0, y: 0, w: 0, h: 0 },
+  action: null,
+  initialized: false,
+};
+
+const cropModal = $('#cropModal');
+const cropBody  = $('#cropBody');
+const cropBox   = $('#cropBox');
+const cropImg   = $('#cropImg');
+
+/** 打开裁剪弹窗 */
+function openCrop(item) {
+  if (!item) return;
+
+  cropState.item = item;
+  cropState.baseCanvas = item.originalCanvas;
+  cropState.initialized = false;
+  cropState.action = null;
+
+  $('#cropFilename').textContent = item.name;
+
+  // 显示弹窗
+  cropModal.classList.add('show');
+  cropModal.setAttribute('aria-hidden', 'false');
+
+  // 用原始内容生成显示图
+  const dataUrl = item.originalCanvas.toDataURL('image/jpeg', 0.92);
+  cropImg.onload = layoutCrop;
+  cropImg.src = dataUrl;
+  if (cropImg.complete && cropImg.naturalWidth > 0) {
+    layoutCrop();
+  }
+}
+
+/** 计算显示尺寸并初始化选框 */
+function layoutCrop() {
+  const nw = cropImg.naturalWidth;
+  const nh = cropImg.naturalHeight;
+  if (!nw || !nh) return;
+
+  const maxW = Math.min(window.innerWidth * 0.92, 1000) - 48;
+  const maxH = Math.min(window.innerHeight * 0.72, 760);
+  const scale = Math.min(maxW / nw, maxH / nh, 1);
+
+  const dispW = Math.max(1, Math.round(nw * scale));
+  const dispH = Math.max(1, Math.round(nh * scale));
+
+  cropBody.style.width  = dispW + 'px';
+  cropBody.style.height = dispH + 'px';
+
+  cropState.dispW = dispW;
+  cropState.dispH = dispH;
+
+  if (!cropState.initialized) {
+    const cr = cropState.item.cropRect;
+    let box;
+    if (cr && cr.w > 0 && cr.h > 0) {
+      box = { x: cr.x * dispW, y: cr.y * dispH, w: cr.w * dispW, h: cr.h * dispH };
+    } else {
+      box = { x: 0, y: 0, w: dispW, h: dispH };
+    }
+    cropState.box = box;
+    cropState.initialized = true;
+  }
+
+  updateCropBoxUI();
+}
+
+/** 更新选框 UI */
+function updateCropBoxUI() {
+  const { x, y, w, h } = cropState.box;
+  cropBox.style.left   = x + 'px';
+  cropBox.style.top    = y + 'px';
+  cropBox.style.width  = w + 'px';
+  cropBox.style.height = h + 'px';
+}
+
+/** 根据拖拽增量调整选框 */
+function applyCropResize(dx, dy) {
+  const { mode, box0 } = cropState.action;
+  const W = cropState.dispW;
+  const H = cropState.dispH;
+  const MIN = 30;
+
+  let x = box0.x, y = box0.y, w = box0.w, h = box0.h;
+
+  if (mode === 'move') {
+    x = clamp(box0.x + dx, 0, W - w);
+    y = clamp(box0.y + dy, 0, H - h);
+  } else {
+    let left   = box0.x;
+    let top    = box0.y;
+    let right  = box0.x + box0.w;
+    let bottom = box0.y + box0.h;
+
+    if (mode.includes('w')) left   = clamp(box0.x + dx, 0, right - MIN);
+    if (mode.includes('e')) right  = clamp(box0.x + box0.w + dx, left + MIN, W);
+    if (mode.includes('n')) top    = clamp(box0.y + dy, 0, bottom - MIN);
+    if (mode.includes('s')) bottom = clamp(box0.y + box0.h + dy, top + MIN, H);
+
+    x = left; y = top; w = right - left; h = bottom - top;
+  }
+
+  cropState.box = { x, y, w, h };
+  updateCropBoxUI();
+}
+
+/* 绑定裁剪拖拽事件（只绑一次） */
+(function bindCropEvents() {
+  cropBox.addEventListener('pointerdown', (e) => {
+    if (!cropState.item) return;
+    const handle = e.target.closest('.crop-handle');
+    const mode = handle ? handle.dataset.dir : 'move';
+    e.preventDefault();
+    e.stopPropagation();
+
+    cropState.action = {
+      mode,
+      startX: e.clientX,
+      startY: e.clientY,
+      box0: { ...cropState.box },
+    };
+    try { cropBox.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+
+  cropBox.addEventListener('pointermove', (e) => {
+    if (!cropState.action) return;
+    e.preventDefault();
+    applyCropResize(
+      e.clientX - cropState.action.startX,
+      e.clientY - cropState.action.startY
+    );
+  });
+
+  const endAction = () => { cropState.action = null; };
+  cropBox.addEventListener('pointerup', endAction);
+  cropBox.addEventListener('pointercancel', endAction);
+})();
+
+/** 确认裁剪 */
+function confirmCrop() {
+  const item = cropState.item;
+  if (!item) return;
+
+  const base = cropState.baseCanvas;
+  const { box, dispW, dispH } = cropState;
+
+  const sx = base.width / dispW;
+  const sy = base.height / dispH;
+
+  let rx = Math.round(box.x * sx);
+  let ry = Math.round(box.y * sy);
+  let rw = Math.round(box.w * sx);
+  let rh = Math.round(box.h * sy);
+
+  rx = clamp(rx, 0, base.width - 1);
+  ry = clamp(ry, 0, base.height - 1);
+  rw = clamp(rw, 1, base.width - rx);
+  rh = clamp(rh, 1, base.height - ry);
+
+  if (rw < 2 || rh < 2) {
+    toast('裁剪区域太小');
+    return;
+  }
+
+  const isFull = rx === 0 && ry === 0 && rw === base.width && rh === base.height;
+
+  if (isFull) {
+    item.canvas = item.originalCanvas;
+    item.cropRect = null;
+  } else {
+    const c = document.createElement('canvas');
+    c.width  = rw;
+    c.height = rh;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, rw, rh);
+    ctx.drawImage(base, rx, ry, rw, rh, 0, 0, rw, rh);
+
+    item.canvas = c;
+    item.cropRect = {
+      x: rx / base.width,
+      y: ry / base.height,
+      w: rw / base.width,
+      h: rh / base.height,
+    };
+  }
+
+  item.thumb = makeThumb(item.canvas);
+
+  closeCrop();
+  render();
+  toast(isFull ? '已恢复原图' : '裁剪已应用');
+}
+
+/** 重置选框为全图 */
+function resetCrop() {
+  if (!cropState.item) return;
+  cropState.box = { x: 0, y: 0, w: cropState.dispW, h: cropState.dispH };
+  updateCropBoxUI();
+}
+
+/** 关闭裁剪弹窗 */
+function closeCrop() {
+  cropModal.classList.remove('show');
+  cropModal.setAttribute('aria-hidden', 'true');
+  cropState.item = null;
+  cropState.action = null;
+  cropState.initialized = false;
+}
+
+/* 裁剪弹窗按钮 */
+$('#cropConfirmBtn').addEventListener('click', confirmCrop);
+$('#cropCancelBtn').addEventListener('click', closeCrop);
+$('#cropResetBtn').addEventListener('click', resetCrop);
+
+/* Esc 关闭 */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && cropModal.classList.contains('show')) {
+    closeCrop();
+  }
+});
+
+/* ============================================================
+ *  五、版式计算
  * ============================================================ */
 
 /**
@@ -576,7 +955,7 @@ function canvasToJpegBytes(canvas) {
 }
 
 /* ============================================================
- *  五、生成 PDF
+ *  六、生成 PDF
  * ============================================================ */
 
 async function generatePdf() {
@@ -590,7 +969,6 @@ async function generatePdf() {
   status.innerHTML = '';
 
   try {
-    // 1. 纸张尺寸
     let [pw, ph] = PAPER_SIZES[$('#paperSize').value] || PAPER_SIZES.a4;
     if ($('#orientation').value === 'landscape') [pw, ph] = [ph, pw];
 
@@ -598,16 +976,14 @@ async function generatePdf() {
     const contentW = pw - margin * 2;
     const contentH = ph - margin * 2;
 
-    // 2. 版式
     const rowSpec = getRowSpec(items.length);
     const rowH = (contentH - GAP * (rowSpec.length - 1)) / rowSpec.length;
 
-    // 3. 创建文档
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([pw, ph]);
 
     let idx = 0;
-    let cursorTop = ph - margin; // 当前行顶部 y 坐标
+    let cursorTop = ph - margin;
 
     for (const cols of rowSpec) {
       const cellW = (contentW - GAP * (cols - 1)) / cols;
@@ -618,12 +994,10 @@ async function generatePdf() {
 
         status.textContent = `正在排版 ${idx}/${items.length}…`;
 
-        // 应用该文件独立的旋转设置
         const rotated = getRotatedCanvas(item);
         const bytes = await canvasToJpegBytes(rotated);
         const img = await pdfDoc.embedJpg(bytes);
 
-        // 等比缩放，居中放置
         const scale = Math.min(cellW / img.width, rowH / img.height);
         const w = img.width  * scale;
         const h = img.height * scale;
@@ -636,13 +1010,11 @@ async function generatePdf() {
       cursorTop -= rowH + GAP;
     }
 
-    // 4. 输出
     status.textContent = '正在写入 PDF…';
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
 
-    // 自动下载
     const stamp = new Date()
       .toLocaleString('zh-CN', { hour12: false })
       .replace(/[\/\s:]/g, '')
@@ -672,7 +1044,7 @@ async function generatePdf() {
 }
 
 /* ============================================================
- *  六、其它按钮
+ *  七、其它
  * ============================================================ */
 
 $('#generateBtn').addEventListener('click', generatePdf);
