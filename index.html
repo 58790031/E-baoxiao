@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>易报销 · 票据合并 PDF</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --primary:#3b5bfd;
+    --primary-dark:#2b46d6;
+    --border:#e4e9f2;
+    --text:#1f2937;
+    --muted:#7b8698;
+    --danger:#e5484d;
+    --radius:14px;
+    --shadow:0 6px 24px rgba(30,50,110,.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:linear-gradient(180deg,#eef2ff 0%,#f5f7fb 300px,#f5f7fb 100%);
+    color:var(--text);
+    min-height:100vh;
+  }
+  .app{max-width:880px;margin:0 auto;padding:32px 20px 80px}
+
+  /* ---------- 头部 ---------- */
+  .hero{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .logo{
+    width:52px;height:52px;border-radius:16px;flex:none;
+    background:linear-gradient(135deg,#5b7bff,#3b5bfd);
+    color:#fff;font-size:24px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 20px rgba(59,91,253,.35);
+  }
+  .hero h1{margin:0;font-size:24px;letter-spacing:.5px}
+  .hero .sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+
+  /* ---------- 拖拽上传区 ---------- */
+  .dropzone{
+    position:relative;
+    border:2px dashed #c9d4ee;
+    border-radius:var(--radius);
+    background:rgba(255,255,255,.7);
+    padding:34px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .dropzone:hover{border-color:var(--primary);background:#fff}
+  .dropzone.dragover{
+    border-color:var(--primary);background:#eef2ff;
+    transform:scale(1.005);
+  }
+  .dropzone input{display:none}
+  .dz-icon{
+    font-size:26px;color:var(--primary);margin-bottom:8px;font-weight:700;
+  }
+  .dz-title{font-size:15px;font-weight:600;margin-bottom:6px}
+  .dz-hint{font-size:12.5px;color:var(--muted)}
+
+  /* ---------- 参数面板 ---------- */
+  .panel{
+    display:flex;flex-wrap:wrap;gap:14px;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:14px 16px;margin-top:18px;
+    box-shadow:var(--shadow);
+  }
+  .opt{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+  .opt select{
+    appearance:none;border:1px solid var(--border);border-radius:9px;
+    padding:7px 28px 7px 11px;font-size:13.5px;color:var(--text);
+    background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%237b8698' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>") no-repeat right 9px center;
+    cursor:pointer;outline:none;
+  }
+  .opt select:focus{border-color:var(--primary)}
+
+  /* ---------- 列表头 ---------- */
+  .section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:26px 2px 12px;
+  }
+  .section-head h2{margin:0;font-size:16px;font-weight:700}
+  .count{
+    display:inline-block;min-width:20px;padding:1px 7px;margin-left:6px;
+    background:var(--primary);color:#fff;border-radius:20px;
+    font-size:12px;font-weight:600;text-align:center;
+  }
+  .link-btn{
+    background:none;border:none;color:var(--muted);font-size:13px;
+    cursor:pointer;padding:4px 6px;border-radius:8px;
+  }
+  .link-btn:hover{color:var(--danger);background:#fef2f2}
+
+  /* ---------- 文件卡片 ---------- */
+  .filelist{display:flex;flex-direction:column;gap:12px}
+  .file-card{
+    display:flex;gap:14px;align-items:center;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:12px 14px;
+    box-shadow:0 2px 10px rgba(30,50,110,.04);
+    animation:slideIn .25s ease;
+  }
+  @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .thumb{
+    width:64px;height:64px;flex:none;border-radius:10px;overflow:hidden;
+    background:#f1f4fa;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .meta{flex:1;min-width:0}
+  .name{
+    font-size:14px;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    margin-bottom:6px;
+  }
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .badge{
+    font-size:11px;color:var(--muted);background:#f1f4fa;
+    border-radius:6px;padding:2px 7px;line-height:1.6;
+  }
+  .badge.pdf{background:#fff1f0;color:#d4380d}
+  .badge.image{background:#eaf4ff;color:#1668dc}
+
+  .rotate-group{display:flex;gap:5px;flex-wrap:wrap}
+  .rot{
+    border:1px solid var(--border);background:#fff;color:var(--muted);
+    border-radius:7px;padding:3px 9px;font-size:11.5px;cursor:pointer;
+    transition:.15s;font-variant-numeric:tabular-nums;
+  }
+  .rot:hover{border-color:#b9c7ee;color:var(--primary)}
+  .rot.active{
+    background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600;
+  }
+
+  .ops{display:flex;flex-direction:column;gap:6px}
+  .icon-btn{
+    width:28px;height:26px;border:1px solid var(--border);background:#fff;
+    border-radius:7px;cursor:pointer;color:var(--muted);font-size:12px;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .icon-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+  .icon-btn:disabled{opacity:.35;cursor:not-allowed}
+  .icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:#fef2f2}
+
+  /* ---------- 空状态 ---------- */
+  .empty{
+    text-align:center;color:#aab4c5;font-size:13.5px;
+    padding:26px 0 6px;
+  }
+  .empty.hidden{display:none}
+
+  /* ---------- 操作区 ---------- */
+  .actions{
+    display:flex;align-items:center;gap:14px;margin-top:28px;
+  }
+  .btn{
+    border:none;border-radius:12px;font-size:15px;font-weight:600;
+    padding:13px 34px;cursor:pointer;transition:.18s;
+  }
+  .btn.primary{
+    background:linear-gradient(135deg,#5b7bff,#3b5bfd);color:#fff;
+    box-shadow:0 8px 20px rgba(59,91,253,.3);
+  }
+  .btn.primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,91,253,.4)}
+  .btn.primary:disabled{
+    background:#c9d3e8;box-shadow:none;cursor:not-allowed;transform:none;
+  }
+  .status{font-size:13.5px;color:var(--muted)}
+  .status a{color:var(--primary);text-decoration:none;font-weight:600;margin-left:6px}
+  .status a:hover{text-decoration:underline}
+
+  .toast{
+    position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
+    background:rgba(31,41,55,.94);color:#fff;font-size:13.5px;
+    padding:11px 20px;border-radius:10px;opacity:0;pointer-events:none;
+    transition:.28s;z-index:99;max-width:80vw;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:560px){
+    .app{padding:20px 14px 60px}
+    .hero h1{font-size:20px}
+    .dropzone{padding:26px 14px}
+    .thumb{width:52px;height:52px}
+    .btn.primary{width:100%;padding:14px}
+    .actions{flex-direction:column;align-items:stretch}
+    .status{text-align:center}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hero">
+    <div class="logo">易</div>
+    <div>
+      <h1>易报销</h1>
+      <p class="sub">发票 / 支付截图 / 菜单，一次上传，合并为一张 PDF</p>
+    </div>
+  </header>
+
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" multiple accept="image/*,application/pdf" />
+    <div class="dz-icon">⬆</div>
+    <div class="dz-title">点击选择文件，或拖拽到此处</div>
+    <div class="dz-hint">支持 PDF 发票、支付截图、菜单图片（JPG / PNG / WEBP）</div>
+  </div>
+
+  <section class="panel">
+    <div class="opt">
+      <label for="paperSize">纸张</label>
+      <select id="paperSize">
+        <option value="a4" selected>A4</option>
+        <option value="a5">A5</option>
+        <option value="letter">Letter</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="orientation">方向</label>
+      <select id="orientation">
+        <option value="portrait" selected>纵向</option>
+        <option value="landscape">横向</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="margin">页边距</label>
+      <select id="margin">
+        <option value="12">窄</option>
+        <option value="24" selected>标准</option>
+        <option value="40">宽</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <h2>文件列表 <span class="count" id="count">0</span></h2>
+    <button class="link-btn" id="clearBtn">清空全部</button>
+  </div>
+
+  <div class="filelist" id="fileList"></div>
+  <div class="empty" id="emptyTip">还没有文件，先上传吧～</div>
+
+  <div class="actions">
+    <button class="btn primary" id="generateBtn" disabled>生成 PDF</button>
+    <span class="status" id="status"></span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 依赖库 -->
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+/* ============================================================
+ *  易报销 —— 票据合并 PDF
+ * ============================================================ */
+
+const { PDFDocument } = PDFLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+/* ---------------- 常量配置 ---------------- */
+const MAX_DIM   = 2200;   // 源图最大边长（px），兼顾清晰度与内存
+const THUMB_DIM = 180;    // 缩略图边长
+const GAP       = 14;     // 单元格间距（pt）
+const JPEG_Q    = 0.92;   // 嵌入 JPEG 质量
+
+const PAPER_SIZES = {
+  a4:     [595.28, 841.89],
+  a5:     [419.53, 595.28],
+  letter: [612,    792   ],
+};
+
+/* ---------------- 状态 ---------------- */
+let items = [];   // { id, name, kind, pageCount, rotation, canvas, thumb }
+let idSeq = 0;
+
+/* ---------------- 工具 ---------------- */
+const $ = (s) => document.querySelector(s);
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ============================================================
+ *  一、文件读取与预处理
+ * ============================================================ */
+
+/** 图片文件 → HTMLImageElement */
+function loadImageElement(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片解码失败')); };
+    img.src = url;
+  });
+}
+
+/** 把任意图像绘制成受尺寸限制的 canvas（白底，避免透明变黑） */
+function imageToCanvas(img) {
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const scale = Math.min(1, MAX_DIM / Math.max(w, h));
+
+  const c = document.createElement('canvas');
+  c.width  = Math.max(1, Math.round(w * scale));
+  c.height = Math.max(1, Math.round(h * scale));
+
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+/** PDF 文件 → 首页渲染为 canvas（高分辨率） */
+async function pdfToCanvas(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const page = await pdf.getPage(1);
+
+  const base = page.getViewport({ scale: 1 });
+  // 目标：长边约 MAX_DIM 像素（最高 3 倍）
+  const scale = Math.min(3, MAX_DIM / Math.max(base.width, base.height));
+  const viewport = page.getViewport({ scale: Math.max(scale, 0.6) });
+
+  const c = document.createElement('canvas');
+  c.width  = Math.round(viewport.width);
+  c.height = Math.round(viewport.height);
+
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  await page.render({ canvasContext: ctx, viewport }).promise;
+
+  const pageCount = pdf.numPages;
+  pdf.destroy();
+  return { canvas: c, pageCount };
+}
+
+/** 生成缩略图 dataURL */
+function makeThumb(canvas) {
+  const scale = Math.min(1, THUMB_DIM / Math.max(canvas.width, canvas.height));
+  const t = document.createElement('canvas');
+  t.width  = Math.max(1, Math.round(canvas.width  * scale));
+  t.height = Math.max(1, Math.round(canvas.height * scale));
+  const ctx = t.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, t.width, t.height);
+  ctx.drawImage(canvas, 0, 0, t.width, t.height);
+  return t.toDataURL('image/jpeg', 0.85);
+}
+
+/** 创建一个文件项 */
+async function createItem(file) {
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  const isImg = file.type.startsWith('image/') ||
+                /\.(jpe?g|png|webp|bmp|gif|avif)$/i.test(file.name);
+  if (!isPdf && !isImg) {
+    toast(`跳过不支持的文件：${file.name}`);
+    return null;
+  }
+
+  let canvas, pageCount = 1;
+  if (isPdf) {
+    const r = await pdfToCanvas(file);
+    canvas = r.canvas;
+    pageCount = r.pageCount;
+  } else {
+    const img = await loadImageElement(file);
+    canvas = imageToCanvas(img);
+  }
+
+  return {
+    id: ++idSeq,
+    name: file.name,
+    kind: isPdf ? 'pdf' : 'image',
+    pageCount,
+    rotation: 0,
+    canvas,
+    thumb: makeThumb(canvas),
+  };
+}
+
+/* ============================================================
+ *  二、列表渲染与交互
+ * ============================================================ */
+
+function render() {
+  const list  = $('#fileList');
+  const count = $('#count');
+  const empty = $('#emptyTip');
+  const gen   = $('#generateBtn');
+
+  list.innerHTML = '';
+  count.textContent = items.length;
+  empty.classList.toggle('hidden', items.length > 0);
+  gen.disabled = items.length === 0;
+
+  items.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card.dataset.id = item.id;
+
+    const rotBtns = [0, 90, 180, 270].map(
+      (a) => `<button class="rot${item.rotation === a ? ' active' : ''}" data-angle="${a}">${a}°</button>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="thumb"><img src="${item.thumb}" alt=""></div>
+      <div class="meta">
+        <div class="name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+        <div class="badges">
+          <span class="badge ${item.kind}">${item.kind === 'pdf' ? 'PDF' : '图片'}</span>
+          <span class="badge">${item.canvas.width}×${item.canvas.height}</span>
+          ${item.kind === 'pdf' && item.pageCount > 1
+            ? `<span class="badge">共 ${item.pageCount} 页 · 取首页</span>` : ''}
+        </div>
+        <div class="rotate-group" data-id="${item.id}">${rotBtns}</div>
+      </div>
+      <div class="ops">
+        <button class="icon-btn" data-act="up"   ${i === 0 ? 'disabled' : ''} title="上移">↑</button>
+        <button class="icon-btn" data-act="down" ${i === items.length - 1 ? 'disabled' : ''} title="下移">↓</button>
+        <button class="icon-btn danger" data-act="del" title="删除">✕</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+/** 列表事件委托 */
+$('#fileList').addEventListener('click', (e) => {
+  // 旋转
+  const rotBtn = e.target.closest('.rot');
+  if (rotBtn) {
+    const id = Number(rotBtn.closest('.rotate-group').dataset.id);
+    const angle = Number(rotBtn.dataset.angle);
+    const item = items.find((it) => it.id === id);
+    if (item) { item.rotation = angle; render(); }
+    return;
+  }
+  // 排序 / 删除
+  const opBtn = e.target.closest('.icon-btn');
+  if (opBtn) {
+    const card = opBtn.closest('.file-card');
+    const idx = Array.from($('#fileList').children).indexOf(card);
+    const act = opBtn.dataset.act;
+    if (act === 'del')  items.splice(idx, 1);
+    if (act === 'up'   && idx > 0)                [items[idx - 1], items[idx]] = [items[idx], items[idx - 1]];
+    if (act === 'down' && idx < items.length - 1) [items[idx + 1], items[idx]] = [items[idx], items[idx + 1]];
+    render();
+  }
+});
+
+/* ============================================================
+ *  三、上传交互
+ * ============================================================ */
+
+const dropzone = $('#dropzone');
+const fileInput = $('#fileInput');
+
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', async (e) => {
+  await addFiles(e.target.files);
+  fileInput.value = '';
+});
+
+['dragenter', 'dragover'].forEach((ev) =>
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  })
+);
+['dragleave', 'drop'].forEach((ev) =>
+  dropzone.addEventListener(ev, (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+  })
+);
+dropzone.addEventListener('drop', async (e) => {
+  if (e.dataTransfer?.files?.length) await addFiles(e.dataTransfer.files);
+});
+
+async function addFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+
+  dropzone.classList.add('loading');
+  const status = $('#status');
+  const old = status.textContent;
+
+  for (let i = 0; i < files.length; i++) {
+    status.textContent = `正在解析 ${i + 1}/${files.length}：${files[i].name}`;
+    try {
+      const item = await createItem(files[i]);
+      if (item) items.push(item);
+    } catch (err) {
+      console.error(err);
+      toast(`无法解析：${files[i].name}`);
+    }
+  }
+
+  dropzone.classList.remove('loading');
+  status.textContent = old;
+  render();
+}
+
+/* ============================================================
+ *  四、版式计算
+ * ============================================================ */
+
+/**
+ * 返回每一行的列数。
+ * 3 个文件：第 1 行整行（发票），第 2 行两列并排（两张图片）。
+ */
+function getRowSpec(n) {
+  if (n <= 0) return [];
+  if (n === 1) return [1];
+  if (n === 2) return [1, 1];
+  if (n === 3) return [1, 2];
+  if (n === 4) return [2, 2];
+  if (n === 5) return [1, 2, 2];
+  if (n === 6) return [2, 2, 2];
+  const rows = [];
+  for (let i = 0; i < n; i += 2) rows.push(Math.min(2, n - i));
+  return rows;
+}
+
+/**
+ * 按 rotation 生成旋转后的 canvas（白底）。
+ * 90° / 270° 会交换宽高。
+ */
+function getRotatedCanvas(item) {
+  const src = item.canvas;
+  const rot = ((item.rotation % 360) + 360) % 360;
+  if (rot === 0) return src;
+
+  const swap = rot === 90 || rot === 270;
+  const out = document.createElement('canvas');
+  out.width  = swap ? src.height : src.width;
+  out.height = swap ? src.width  : src.height;
+
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate((rot * Math.PI) / 180);
+  ctx.drawImage(src, -src.width / 2, -src.height / 2);
+  return out;
+}
+
+/** canvas → JPEG 字节 */
+function canvasToJpegBytes(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(async (blob) => {
+      if (!blob) return reject(new Error('导出图片失败'));
+      resolve(new Uint8Array(await blob.arrayBuffer()));
+    }, 'image/jpeg', JPEG_Q);
+  });
+}
+
+/* ============================================================
+ *  五、生成 PDF
+ * ============================================================ */
+
+async function generatePdf() {
+  if (!items.length) return;
+
+  const btn = $('#generateBtn');
+  const status = $('#status');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = '生成中…';
+  status.innerHTML = '';
+
+  try {
+    // 1. 纸张尺寸
+    let [pw, ph] = PAPER_SIZES[$('#paperSize').value] || PAPER_SIZES.a4;
+    if ($('#orientation').value === 'landscape') [pw, ph] = [ph, pw];
+
+    const margin = parseFloat($('#margin').value) || 24;
+    const contentW = pw - margin * 2;
+    const contentH = ph - margin * 2;
+
+    // 2. 版式
+    const rowSpec = getRowSpec(items.length);
+    const rowH = (contentH - GAP * (rowSpec.length - 1)) / rowSpec.length;
+
+    // 3. 创建文档
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([pw, ph]);
+
+    let idx = 0;
+    let cursorTop = ph - margin; // 当前行顶部 y 坐标
+
+    for (const cols of rowSpec) {
+      const cellW = (contentW - GAP * (cols - 1)) / cols;
+
+      for (let c = 0; c < cols; c++) {
+        const item = items[idx++];
+        if (!item) break;
+
+        status.textContent = `正在排版 ${idx}/${items.length}…`;
+
+        // 应用该文件独立的旋转设置
+        const rotated = getRotatedCanvas(item);
+        const bytes = await canvasToJpegBytes(rotated);
+        const img = await pdfDoc.embedJpg(bytes);
+
+        // 等比缩放，居中放置
+        const scale = Math.min(cellW / img.width, rowH / img.height);
+        const w = img.width  * scale;
+        const h = img.height * scale;
+        const x = margin + c * (cellW + GAP) + (cellW - w) / 2;
+        const y = cursorTop - (rowH - h) / 2 - h;
+
+        page.drawImage(img, { x, y, width: w, height: h });
+      }
+
+      cursorTop -= rowH + GAP;
+    }
+
+    // 4. 输出
+    status.textContent = '正在写入 PDF…';
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    // 自动下载
+    const stamp = new Date()
+      .toLocaleString('zh-CN', { hour12: false })
+      .replace(/[\/\s:]/g, '')
+      .slice(0, 12);
+    const fileName = `易报销_${stamp}.pdf`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    status.innerHTML =
+      `✅ 已生成 <strong>${fileName}</strong>` +
+      `<a href="${url}" target="_blank" rel="noopener">预览</a>`;
+
+    toast('PDF 已生成并开始下载');
+  } catch (err) {
+    console.error(err);
+    status.textContent = '';
+    toast('生成失败：' + (err.message || '未知错误'));
+  } finally {
+    btn.disabled = items.length === 0;
+    btn.textContent = originalText;
+  }
+}
+
+/* ============================================================
+ *  六、其它按钮
+ * ============================================================ */
+
+$('#generateBtn').addEventListener('click', generatePdf);
+
+$('#clearBtn').addEventListener('click', () => {
+  if (!items.length) return;
+  items = [];
+  $('#status').textContent = '';
+  render();
+  toast('已清空');
+});
+
+// 初始化
+render();
+</script>
+</body>
+</html>
