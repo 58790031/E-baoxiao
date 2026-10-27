@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>易报销 · 票据合并 PDF</title>
+<title>易报销 · 票据合并 / 图片</title>
 <style>
   :root{
     --bg:#f5f7fb;
@@ -28,7 +28,7 @@
   .app{max-width:880px;margin:0 auto;padding:32px 20px 80px}
 
   /* ---------- 头部 ---------- */
-  .hero{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .hero{display:flex;align-items:center;gap:14px;margin-bottom:20px}
   .logo{
     width:52px;height:52px;border-radius:16px;flex:none;
     background:linear-gradient(135deg,#5b7bff,#3b5bfd);
@@ -38,6 +38,23 @@
   }
   .hero h1{margin:0;font-size:24px;letter-spacing:.5px}
   .hero .sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+
+  /* ---------- 模式切换 ---------- */
+  .mode-switch{
+    display:inline-flex;background:#fff;border:1px solid var(--border);
+    border-radius:12px;padding:4px;gap:4px;margin-bottom:18px;
+    box-shadow:var(--shadow);
+  }
+  .mode-btn{
+    border:none;background:transparent;border-radius:9px;
+    padding:9px 22px;font-size:14px;font-weight:600;color:var(--muted);
+    cursor:pointer;transition:.18s;
+  }
+  .mode-btn:hover{color:var(--text)}
+  .mode-btn.active{
+    background:linear-gradient(135deg,#5b7bff,#3b5bfd);color:#fff;
+    box-shadow:0 4px 12px rgba(59,91,253,.3);
+  }
 
   /* ---------- 拖拽上传区 ---------- */
   .dropzone{
@@ -64,11 +81,12 @@
 
   /* ---------- 参数面板 ---------- */
   .panel{
-    display:flex;flex-wrap:wrap;gap:14px;
+    display:none;flex-wrap:wrap;gap:14px;
     background:var(--card);border:1px solid var(--border);
     border-radius:var(--radius);padding:14px 16px;margin-top:18px;
     box-shadow:var(--shadow);
   }
+  .panel.show{display:flex}
   .opt{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
   .opt select{
     appearance:none;border:1px solid var(--border);border-radius:9px;
@@ -77,6 +95,11 @@
     cursor:pointer;outline:none;
   }
   .opt select:focus{border-color:var(--primary)}
+  .panel-note{
+    flex-basis:100%;font-size:12px;color:var(--muted);
+    background:#f7f9ff;border:1px dashed #dbe3f7;border-radius:9px;
+    padding:8px 11px;line-height:1.6;
+  }
 
   /* ---------- 列表头 ---------- */
   .section-head{
@@ -84,6 +107,8 @@
     margin:26px 2px 12px;
   }
   .section-head h2{margin:0;font-size:16px;font-weight:700}
+  .order-tip{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
+  .order-tip.hidden{display:none}
   .count{
     display:inline-block;min-width:20px;padding:1px 7px;margin-left:6px;
     background:var(--primary);color:#fff;border-radius:20px;
@@ -273,9 +298,57 @@
   .btn-sm.primary{background:var(--primary);color:#fff}
   .btn-sm.primary:hover{background:var(--primary-dark)}
 
+  /* ==================== 文件名弹窗 ==================== */
+  .name-modal{
+    position:fixed;inset:0;z-index:120;
+    background:rgba(15,23,42,.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .name-modal.show{opacity:1;pointer-events:auto}
+  .name-dialog{
+    background:#fff;border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    width:min(460px,92vw);
+    transform:translateY(10px);transition:transform .2s;
+  }
+  .name-modal.show .name-dialog{transform:none}
+  .name-header{
+    padding:18px 20px 0;font-size:16px;font-weight:700;
+    display:flex;align-items:center;gap:8px;
+  }
+  .name-body{padding:16px 20px 4px}
+  .name-input-wrap{
+    display:flex;align-items:center;
+    border:1px solid var(--border);border-radius:10px;
+    overflow:hidden;background:#fff;transition:.15s;
+  }
+  .name-input-wrap:focus-within{
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(59,91,253,.12);
+  }
+  .name-input{
+    flex:1;border:none;outline:none;padding:12px 12px;
+    font-size:14px;color:var(--text);background:transparent;
+    min-width:0;font-family:inherit;
+  }
+  .name-ext{
+    padding:0 12px;font-size:14px;color:var(--muted);
+    background:#f1f4fa;align-self:stretch;
+    display:flex;align-items:center;
+    border-left:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .name-hint{margin:10px 2px 0;font-size:12px;color:var(--muted);line-height:1.6}
+  .name-footer{
+    padding:14px 20px 18px;display:flex;justify-content:flex-end;gap:10px;
+  }
+
   @media (max-width:560px){
     .app{padding:20px 14px 60px}
     .hero h1{font-size:20px}
+    .mode-btn{padding:8px 14px;font-size:13px}
     .dropzone{padding:26px 14px}
     .thumb{width:52px;height:52px}
     .btn.primary{width:100%;padding:14px}
@@ -287,6 +360,7 @@
     .crop-footer{padding:12px 14px}
     .crop-hint{display:none}
     .crop-actions{width:100%;justify-content:flex-end}
+    .name-footer .btn-sm{flex:1}
   }
 </style>
 </head>
@@ -296,9 +370,15 @@
     <div class="logo">易</div>
     <div>
       <h1>易报销</h1>
-      <p class="sub">发票 / 支付截图 / 菜单，一次上传，合并为一张 PDF</p>
+      <p class="sub">发票 / 支付截图 / 菜单，生成PDF 或生成图片</p>
     </div>
   </header>
+
+  <!-- 模式切换 -->
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="pdf">📄 生成PDF</button>
+    <button class="mode-btn" data-mode="collage">🧩 生成拼图</button>
+  </div>
 
   <div class="dropzone" id="dropzone">
     <input type="file" id="fileInput" multiple accept="image/*,application/pdf" />
@@ -307,7 +387,8 @@
     <div class="dz-hint">支持 PDF 发票、支付截图、菜单图片（JPG / PNG / WEBP）</div>
   </div>
 
-  <section class="panel">
+  <!-- PDF 参数 -->
+  <section class="panel show" id="pdfPanel">
     <div class="opt">
       <label for="paperSize">纸张</label>
       <select id="paperSize">
@@ -333,8 +414,70 @@
     </div>
   </section>
 
+  <!-- 拼图参数 -->
+  <section class="panel" id="collagePanel">
+    <div class="opt">
+      <label for="collageOrientation">方向</label>
+      <select id="collageOrientation">
+        <option value="portrait" selected>纵向 A4</option>
+        <option value="landscape">横向 A4</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collageCols">列数</label>
+      <select id="collageCols">
+        <option value="1">1 列（上下）</option>
+        <option value="2" selected>2 列</option>
+        <option value="3">3 列</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collageWidth">A4 宽</label>
+      <select id="collageWidth">
+        <option value="800">800 px</option>
+        <option value="1200" selected>1200 px</option>
+        <option value="1600">1600 px</option>
+        <option value="2000">2000 px</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collageGap">间距</label>
+      <select id="collageGap">
+        <option value="8">小</option>
+        <option value="16" selected>中</option>
+        <option value="28">大</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collagePadding">留白</label>
+      <select id="collagePadding">
+        <option value="0">无</option>
+        <option value="24" selected>标准</option>
+        <option value="48">宽</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collageBg">背景</label>
+      <select id="collageBg">
+        <option value="#ffffff" selected>白色</option>
+        <option value="#f2f4f8">浅灰</option>
+        <option value="#1f2937">深色</option>
+      </select>
+    </div>
+    <div class="opt">
+      <label for="collageFormat">格式</label>
+      <select id="collageFormat">
+        <option value="png" selected>PNG</option>
+        <option value="jpeg">JPEG</option>
+      </select>
+    </div>
+    <p class="panel-note">
+      📐 输出画布固定为 A4 比例（纵向 210 : 297，横向 297 : 210）。内容按列排版后整体等比缩放并居中，超出部分会自动缩小，绝不裁剪。
+    </p>
+  </section>
+
   <div class="section-head">
-    <h2>文件列表 <span class="count" id="count">0</span></h2>
+    <h2>文件列表 <span class="count" id="count">0</span><span class="order-tip hidden" id="orderTip">· 顺序即排版顺序</span></h2>
     <button class="link-btn" id="clearBtn">清空全部</button>
   </div>
 
@@ -371,12 +514,30 @@
       </div>
     </div>
     <div class="crop-footer">
-      <span class="crop-hint">拖动选框调整裁剪区域；旋转将在生成 PDF 时应用</span>
+      <span class="crop-hint">拖动选框调整裁剪区域；旋转将在生成时应用</span>
       <div class="crop-actions">
         <button class="btn-sm ghost" id="cropResetBtn">重置</button>
         <button class="btn-sm ghost" id="cropCancelBtn">取消</button>
         <button class="btn-sm primary" id="cropConfirmBtn">确认裁剪</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 文件名弹窗 ==================== -->
+<div class="name-modal" id="nameModal" aria-hidden="true">
+  <div class="name-dialog" role="dialog" aria-modal="true" aria-label="编辑文件名">
+    <div class="name-header">💾 保存文件</div>
+    <div class="name-body">
+      <div class="name-input-wrap">
+        <input type="text" id="nameInput" class="name-input" spellcheck="false" autocomplete="off" />
+        <span class="name-ext" id="nameExt">.pdf</span>
+      </div>
+      <p class="name-hint">文件名不能包含 \ / : * ? " &lt; &gt; | 等字符，扩展名由格式决定。</p>
+    </div>
+    <div class="name-footer">
+      <button class="btn-sm ghost" id="nameCancelBtn">取消</button>
+      <button class="btn-sm primary" id="nameConfirmBtn">确认生成</button>
     </div>
   </div>
 </div>
@@ -388,7 +549,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
 /* ============================================================
- *  易报销 —— 票据合并 PDF（支持裁剪）
+ *  易报销 —— 生成PDF / 生成拼图（裁剪、旋转、自定义文件名、A4 比例）
  * ============================================================ */
 
 const { PDFDocument } = PDFLib;
@@ -396,10 +557,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 /* ---------------- 常量配置 ---------------- */
-const MAX_DIM   = 2200;   // 源图最大边长（px），兼顾清晰度与内存
+const MAX_DIM   = 2200;   // 源图最大边长（px）
 const THUMB_DIM = 180;    // 缩略图边长
-const GAP       = 14;     // 单元格间距（pt）
-const JPEG_Q    = 0.92;   // 嵌入 JPEG 质量
+const GAP       = 14;     // PDF 单元格间距（pt）
+const JPEG_Q    = 0.92;   // PDF 嵌入 JPEG 质量
 
 const PAPER_SIZES = {
   a4:     [595.28, 841.89],
@@ -407,9 +568,14 @@ const PAPER_SIZES = {
   letter: [612,    792   ],
 };
 
+/* A4 宽高比（纵向：高 / 宽） */
+const A4_H_OVER_W = 297 / 210;   // ≈ 1.4142
+const A4_W_OVER_H = 210 / 297;   // ≈ 0.7071
+
 /* ---------------- 状态 ---------------- */
-let items = [];   // { id, name, kind, pageCount, rotation, canvas, originalCanvas, cropRect, thumb }
+let items = [];          // { id, name, kind, pageCount, rotation, canvas, originalCanvas, cropRect, thumb }
 let idSeq = 0;
+let currentMode = 'pdf'; // 'pdf' | 'collage'
 
 /* ---------------- 工具 ---------------- */
 const $ = (s) => document.querySelector(s);
@@ -430,11 +596,20 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
+/** 生成默认文件名（不含扩展名） */
+function makeDefaultName(prefix) {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp =
+    `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+    `_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${prefix}_${stamp}`;
+}
+
 /* ============================================================
  *  一、文件读取与预处理
  * ============================================================ */
 
-/** 图片文件 → HTMLImageElement */
 function loadImageElement(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -445,7 +620,6 @@ function loadImageElement(file) {
   });
 }
 
-/** 把任意图像绘制成受尺寸限制的 canvas（白底，避免透明变黑） */
 function imageToCanvas(img) {
   const w = img.naturalWidth || img.width;
   const h = img.naturalHeight || img.height;
@@ -462,7 +636,6 @@ function imageToCanvas(img) {
   return c;
 }
 
-/** PDF 文件 → 首页渲染为 canvas（高分辨率） */
 async function pdfToCanvas(file) {
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -487,7 +660,6 @@ async function pdfToCanvas(file) {
   return { canvas: c, pageCount };
 }
 
-/** 生成缩略图 dataURL */
 function makeThumb(canvas) {
   const scale = Math.min(1, THUMB_DIM / Math.max(canvas.width, canvas.height));
   const t = document.createElement('canvas');
@@ -500,7 +672,6 @@ function makeThumb(canvas) {
   return t.toDataURL('image/jpeg', 0.85);
 }
 
-/** 创建一个文件项 */
 async function createItem(file) {
   const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
   const isImg = file.type.startsWith('image/') ||
@@ -526,9 +697,9 @@ async function createItem(file) {
     kind: isPdf ? 'pdf' : 'image',
     pageCount,
     rotation: 0,
-    canvas,               // 当前使用的内容（可能是裁剪结果）
-    originalCanvas: canvas, // 原始内容（裁剪基准）
-    cropRect: null,       // 归一化裁剪区域 {x,y,w,h}，null 表示未裁剪
+    canvas,
+    originalCanvas: canvas,
+    cropRect: null,
     thumb: makeThumb(canvas),
   };
 }
@@ -583,9 +754,7 @@ function render() {
   });
 }
 
-/** 列表事件委托 */
 $('#fileList').addEventListener('click', (e) => {
-  // 旋转
   const rotBtn = e.target.closest('.rot');
   if (rotBtn) {
     const id = Number(rotBtn.closest('.rotate-group').dataset.id);
@@ -594,7 +763,6 @@ $('#fileList').addEventListener('click', (e) => {
     if (item) { item.rotation = angle; render(); }
     return;
   }
-  // 裁剪
   const cropBtn = e.target.closest('.crop-btn');
   if (cropBtn) {
     const id = Number(cropBtn.dataset.crop);
@@ -602,7 +770,6 @@ $('#fileList').addEventListener('click', (e) => {
     if (item) openCrop(item);
     return;
   }
-  // 排序 / 删除
   const opBtn = e.target.closest('.icon-btn');
   if (opBtn) {
     const card = opBtn.closest('.file-card');
@@ -687,7 +854,6 @@ const cropBody  = $('#cropBody');
 const cropBox   = $('#cropBox');
 const cropImg   = $('#cropImg');
 
-/** 打开裁剪弹窗 */
 function openCrop(item) {
   if (!item) return;
 
@@ -698,11 +864,9 @@ function openCrop(item) {
 
   $('#cropFilename').textContent = item.name;
 
-  // 显示弹窗
   cropModal.classList.add('show');
   cropModal.setAttribute('aria-hidden', 'false');
 
-  // 用原始内容生成显示图
   const dataUrl = item.originalCanvas.toDataURL('image/jpeg', 0.92);
   cropImg.onload = layoutCrop;
   cropImg.src = dataUrl;
@@ -711,7 +875,6 @@ function openCrop(item) {
   }
 }
 
-/** 计算显示尺寸并初始化选框 */
 function layoutCrop() {
   const nw = cropImg.naturalWidth;
   const nh = cropImg.naturalHeight;
@@ -745,7 +908,6 @@ function layoutCrop() {
   updateCropBoxUI();
 }
 
-/** 更新选框 UI */
 function updateCropBoxUI() {
   const { x, y, w, h } = cropState.box;
   cropBox.style.left   = x + 'px';
@@ -754,7 +916,6 @@ function updateCropBoxUI() {
   cropBox.style.height = h + 'px';
 }
 
-/** 根据拖拽增量调整选框 */
 function applyCropResize(dx, dy) {
   const { mode, box0 } = cropState.action;
   const W = cropState.dispW;
@@ -784,7 +945,6 @@ function applyCropResize(dx, dy) {
   updateCropBoxUI();
 }
 
-/* 绑定裁剪拖拽事件（只绑一次） */
 (function bindCropEvents() {
   cropBox.addEventListener('pointerdown', (e) => {
     if (!cropState.item) return;
@@ -816,7 +976,6 @@ function applyCropResize(dx, dy) {
   cropBox.addEventListener('pointercancel', endAction);
 })();
 
-/** 确认裁剪 */
 function confirmCrop() {
   const item = cropState.item;
   if (!item) return;
@@ -872,14 +1031,12 @@ function confirmCrop() {
   toast(isFull ? '已恢复原图' : '裁剪已应用');
 }
 
-/** 重置选框为全图 */
 function resetCrop() {
   if (!cropState.item) return;
   cropState.box = { x: 0, y: 0, w: cropState.dispW, h: cropState.dispH };
   updateCropBoxUI();
 }
 
-/** 关闭裁剪弹窗 */
 function closeCrop() {
   cropModal.classList.remove('show');
   cropModal.setAttribute('aria-hidden', 'true');
@@ -888,25 +1045,76 @@ function closeCrop() {
   cropState.initialized = false;
 }
 
-/* 裁剪弹窗按钮 */
 $('#cropConfirmBtn').addEventListener('click', confirmCrop);
 $('#cropCancelBtn').addEventListener('click', closeCrop);
 $('#cropResetBtn').addEventListener('click', resetCrop);
 
-/* Esc 关闭 */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && cropModal.classList.contains('show')) {
     closeCrop();
   }
 });
 
+window.addEventListener('resize', () => {
+  if (!cropModal.classList.contains('show') || !cropState.item) return;
+  const { dispW, dispH, box } = cropState;
+  if (!dispW || !dispH) return;
+  const ratio = { x: box.x / dispW, y: box.y / dispH, w: box.w / dispW, h: box.h / dispH };
+  layoutCrop();
+  cropState.box = {
+    x: ratio.x * cropState.dispW,
+    y: ratio.y * cropState.dispH,
+    w: ratio.w * cropState.dispW,
+    h: ratio.h * cropState.dispH,
+  };
+  updateCropBoxUI();
+});
+
 /* ============================================================
- *  五、版式计算
+ *  五、旋转与导出工具
  * ============================================================ */
 
 /**
- * 返回每一行的列数。
- * 3 个文件：第 1 行整行（发票），第 2 行两列并排（两张图片）。
+ * 按 rotation 生成旋转后的 canvas。
+ * @param {object} item  文件项
+ * @param {string|null} bgColor  旋转填充色；null 表示透明（拼图用）
+ */
+function getRotatedCanvas(item, bgColor = '#ffffff') {
+  const src = item.canvas;
+  const rot = ((item.rotation % 360) + 360) % 360;
+  if (rot === 0) return src;
+
+  const swap = rot === 90 || rot === 270;
+  const out = document.createElement('canvas');
+  out.width  = swap ? src.height : src.width;
+  out.height = swap ? src.width  : src.height;
+
+  const ctx = out.getContext('2d');
+  if (bgColor) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, out.width, out.height);
+  }
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate((rot * Math.PI) / 180);
+  ctx.drawImage(src, -src.width / 2, -src.height / 2);
+  return out;
+}
+
+function canvasToJpegBytes(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(async (blob) => {
+      if (!blob) return reject(new Error('导出图片失败'));
+      resolve(new Uint8Array(await blob.arrayBuffer()));
+    }, 'image/jpeg', JPEG_Q);
+  });
+}
+
+/* ============================================================
+ *  六、PDF 排版与生成
+ * ============================================================ */
+
+/**
+ * PDF 模式的行列分配（3 张：第 1 行整行发票，第 2 行两列并排）
  */
 function getRowSpec(n) {
   if (n <= 0) return [];
@@ -921,44 +1129,7 @@ function getRowSpec(n) {
   return rows;
 }
 
-/**
- * 按 rotation 生成旋转后的 canvas（白底）。
- * 90° / 270° 会交换宽高。
- */
-function getRotatedCanvas(item) {
-  const src = item.canvas;
-  const rot = ((item.rotation % 360) + 360) % 360;
-  if (rot === 0) return src;
-
-  const swap = rot === 90 || rot === 270;
-  const out = document.createElement('canvas');
-  out.width  = swap ? src.height : src.width;
-  out.height = swap ? src.width  : src.height;
-
-  const ctx = out.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, out.width, out.height);
-  ctx.translate(out.width / 2, out.height / 2);
-  ctx.rotate((rot * Math.PI) / 180);
-  ctx.drawImage(src, -src.width / 2, -src.height / 2);
-  return out;
-}
-
-/** canvas → JPEG 字节 */
-function canvasToJpegBytes(canvas) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(async (blob) => {
-      if (!blob) return reject(new Error('导出图片失败'));
-      resolve(new Uint8Array(await blob.arrayBuffer()));
-    }, 'image/jpeg', JPEG_Q);
-  });
-}
-
-/* ============================================================
- *  六、生成 PDF
- * ============================================================ */
-
-async function generatePdf() {
+async function generatePdf(fileName) {
   if (!items.length) return;
 
   const btn = $('#generateBtn');
@@ -994,7 +1165,7 @@ async function generatePdf() {
 
         status.textContent = `正在排版 ${idx}/${items.length}…`;
 
-        const rotated = getRotatedCanvas(item);
+        const rotated = getRotatedCanvas(item, '#ffffff');
         const bytes = await canvasToJpegBytes(rotated);
         const img = await pdfDoc.embedJpg(bytes);
 
@@ -1015,12 +1186,6 @@ async function generatePdf() {
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
 
-    const stamp = new Date()
-      .toLocaleString('zh-CN', { hour12: false })
-      .replace(/[\/\s:]/g, '')
-      .slice(0, 12);
-    const fileName = `易报销_${stamp}.pdf`;
-
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
@@ -1029,7 +1194,7 @@ async function generatePdf() {
     a.remove();
 
     status.innerHTML =
-      `✅ 已生成 <strong>${fileName}</strong>` +
+      `✅ 已生成 <strong>${escapeHtml(fileName)}</strong>` +
       `<a href="${url}" target="_blank" rel="noopener">预览</a>`;
 
     toast('PDF 已生成并开始下载');
@@ -1044,10 +1209,280 @@ async function generatePdf() {
 }
 
 /* ============================================================
- *  七、其它
+ *  七、拼图排版与生成（固定 A4 比例）
  * ============================================================ */
 
-$('#generateBtn').addEventListener('click', generatePdf);
+/**
+ * 拼图模式的行列分配。
+ * 3 张（2 列）→ [1, 2]；其余尽量填满每行。
+ */
+function getCollageRowSpec(n, maxCols) {
+  if (n <= 0) return [];
+  if (n <= maxCols) return [n];
+  if (n === 3 && maxCols === 2) return [1, 2];
+
+  const rows = [];
+  let rem = n;
+  while (rem > 0) {
+    const c = Math.min(maxCols, rem);
+    rows.push(c);
+    rem -= c;
+  }
+  return rows;
+}
+
+/**
+ * 生成 A4 比例拼图。
+ * @param {string} fileName 完整文件名（含扩展名）
+ */
+async function generateCollage(fileName) {
+  if (!items.length) return;
+
+  const btn = $('#generateBtn');
+  const status = $('#status');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = '生成中…';
+  status.innerHTML = '';
+
+  try {
+    const orientation = $('#collageOrientation').value;   // portrait | landscape
+    const maxCols = parseInt($('#collageCols').value, 10) || 2;
+    const baseW   = parseInt($('#collageWidth').value, 10) || 1200;
+    const gap     = parseInt($('#collageGap').value, 10) || 16;
+    const pad     = parseInt($('#collagePadding').value, 10) || 0;
+    const bg      = $('#collageBg').value;
+    const format  = $('#collageFormat').value;
+
+    /* ---------- 1. 计算 A4 画布尺寸 ---------- */
+    const outW = baseW;
+    const outH = orientation === 'portrait'
+      ? Math.round(baseW * A4_H_OVER_W)   // 高 = 宽 × 1.4142
+      : Math.round(baseW * A4_W_OVER_H);  // 高 = 宽 × 0.7071
+
+    const innerW = Math.max(40, outW - pad * 2);
+    const innerH = Math.max(40, outH - pad * 2);
+
+    /* ---------- 2. 准备旋转后的画布（透明底） ---------- */
+    status.textContent = '正在准备图片…';
+    const prepared = [];
+    for (let i = 0; i < items.length; i++) {
+      prepared.push(getRotatedCanvas(items[i], null));
+    }
+
+    /* ---------- 3. 按列宽计算内容布局（逻辑坐标） ---------- */
+    const rowSpec = getCollageRowSpec(prepared.length, maxCols);
+
+    let idx = 0;
+    const rows = [];
+    let contentH = 0;
+
+    for (const cols of rowSpec) {
+      const cellW = (innerW - gap * (cols - 1)) / cols;
+      let rowH = 0;
+      const cells = [];
+
+      for (let c = 0; c < cols; c++) {
+        const cnv = prepared[idx++];
+        if (!cnv) break;
+        const h = cnv.height * (cellW / cnv.width);
+        rowH = Math.max(rowH, h);
+        cells.push({ cnv, w: cellW, h });
+      }
+
+      rows.push({ cells, h: rowH });
+      contentH += rowH;
+    }
+    contentH += gap * Math.max(0, rows.length - 1);
+
+    if (contentH < 1) throw new Error('内容为空');
+
+    /* ---------- 4. 等比缩放到 A4 区域内（不放大） ---------- */
+    const fit = Math.min(1, innerH / contentH);
+
+    /* ---------- 5. 绘制 ---------- */
+    status.textContent = '正在绘制画布…';
+    const out = document.createElement('canvas');
+    out.width  = outW;
+    out.height = outH;
+    const ctx = out.getContext('2d');
+
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, outW, outH);
+
+    // 垂直居中
+    const startY = pad + Math.max(0, (innerH - contentH * fit) / 2);
+
+    let cursorY = startY;
+    for (const row of rows) {
+      const rowH = row.h * fit;
+      // 每行水平居中
+      const rowW = row.cells.reduce((s, c) => s + c.w * fit, 0)
+                 + gap * fit * Math.max(0, row.cells.length - 1);
+      let x = pad + Math.max(0, (innerW - rowW) / 2);
+
+      for (const cell of row.cells) {
+        const w = cell.w * fit;
+        const h = cell.h * fit;
+        const dy = cursorY + (rowH - h) / 2;   // 行内垂直居中
+        ctx.drawImage(cell.cnv, x, dy, w, h);
+        x += w + gap * fit;
+      }
+
+      cursorY += rowH + gap * fit;
+    }
+
+    /* ---------- 6. 导出 ---------- */
+    status.textContent = '正在导出图片…';
+    const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+    const quality = format === 'jpeg' ? 0.92 : undefined;
+
+    const blob = await new Promise((res, rej) => {
+      out.toBlob((b) => (b ? res(b) : rej(new Error('导出失败'))), mime, quality);
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    status.innerHTML =
+      `✅ 已生成 <strong>${escapeHtml(fileName)}</strong>` +
+      `<span style="margin-left:6px">${outW}×${outH}（A4 比例）</span>` +
+      `<a href="${url}" target="_blank" rel="noopener">预览</a>`;
+
+    toast(`拼图已生成（${outW}×${outH}，A4 比例）`);
+  } catch (err) {
+    console.error(err);
+    status.textContent = '';
+    toast('生成失败：' + (err.message || '未知错误'));
+  } finally {
+    btn.disabled = items.length === 0;
+    btn.textContent = originalText;
+  }
+}
+
+/* ============================================================
+ *  八、文件名弹窗
+ * ============================================================ */
+
+let nameResolve = null;
+
+/**
+ * 打开文件名编辑弹窗
+ * @param {string} defaultBase 默认主文件名（不含扩展名）
+ * @param {string} ext         扩展名（含点，如 ".pdf"）
+ * @returns {Promise<string|null>} 用户确认的主文件名（不含扩展名），取消返回 null
+ */
+function openNameDialog(defaultBase, ext) {
+  return new Promise((resolve) => {
+    nameResolve = resolve;
+
+    const input = $('#nameInput');
+    input.value = defaultBase;
+    $('#nameExt').textContent = ext;
+
+    $('#nameModal').classList.add('show');
+    $('#nameModal').setAttribute('aria-hidden', 'false');
+
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 50);
+  });
+}
+
+function closeNameDialog(result) {
+  $('#nameModal').classList.remove('show');
+  $('#nameModal').setAttribute('aria-hidden', 'true');
+  if (nameResolve) {
+    const fn = nameResolve;
+    nameResolve = null;
+    fn(result);
+  }
+}
+
+function confirmNameDialog() {
+  let v = $('#nameInput').value.trim();
+  // 去掉用户可能误输入的扩展名
+  v = v.replace(/\.(pdf|png|jpe?g)$/i, '').trim();
+  // 去掉非法字符
+  v = v.replace(/[\\/:*?"<>|]/g, '').trim();
+
+  if (!v) {
+    toast('请输入文件名');
+    return;
+  }
+  closeNameDialog(v);
+}
+
+$('#nameConfirmBtn').addEventListener('click', confirmNameDialog);
+$('#nameCancelBtn').addEventListener('click', () => closeNameDialog(null));
+
+$('#nameModal').addEventListener('click', (e) => {
+  if (e.target === $('#nameModal')) closeNameDialog(null);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!$('#nameModal').classList.contains('show')) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    confirmNameDialog();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    closeNameDialog(null);
+  }
+});
+
+/* ============================================================
+ *  九、模式切换与生成入口
+ * ============================================================ */
+
+function updateModeUI() {
+  document.querySelectorAll('.mode-btn').forEach((b) => {
+    b.classList.toggle('active', b.dataset.mode === currentMode);
+  });
+
+  $('#pdfPanel').classList.toggle('show', currentMode === 'pdf');
+  $('#collagePanel').classList.toggle('show', currentMode === 'collage');
+  $('#orderTip').classList.toggle('hidden', currentMode !== 'collage');
+
+  $('#generateBtn').textContent = currentMode === 'pdf' ? '生成 PDF' : '生成拼图';
+  $('#status').innerHTML = '';
+}
+
+document.querySelectorAll('.mode-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.mode === currentMode) return;
+    currentMode = btn.dataset.mode;
+    updateModeUI();
+  });
+});
+
+/** 生成入口：先弹窗编辑文件名，再真正生成 */
+async function handleGenerate() {
+  if (!items.length) return;
+
+  if (currentMode === 'pdf') {
+    const defaultBase = makeDefaultName('易报销');
+    const base = await openNameDialog(defaultBase, '.pdf');
+    if (base === null) return;              // 用户取消
+    await generatePdf(base + '.pdf');
+  } else {
+    const format = $('#collageFormat').value;
+    const ext = format === 'jpeg' ? '.jpg' : '.png';
+    const defaultBase = makeDefaultName('易报销_拼图');
+    const base = await openNameDialog(defaultBase, ext);
+    if (base === null) return;              // 用户取消
+    await generateCollage(base + ext);
+  }
+}
+
+$('#generateBtn').addEventListener('click', handleGenerate);
 
 $('#clearBtn').addEventListener('click', () => {
   if (!items.length) return;
@@ -1057,7 +1492,8 @@ $('#clearBtn').addEventListener('click', () => {
   toast('已清空');
 });
 
-// 初始化
+/* 初始化 */
+updateModeUI();
 render();
 </script>
 </body>
